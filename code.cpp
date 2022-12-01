@@ -4,88 +4,69 @@ using namespace std;
 
 #define LOCAL
 
-class Edge
+class Heap
 {
+
 public:
-    int out, in, cost;
-};
+    vector<int> vec;
 
-class UnionFind
-{
-public:
-    int num;
-    int components;
-    vector<int> roots;
-    vector<int> depths;
-
-    UnionFind(int num)
+    void add(int x)
     {
-        this->num = num;
-        components = num;
+        vec.push_back(x);
 
-        for (int i = 0; i < num; i++)
-            roots.push_back(i);
-        for (int i = 0; i < num; i++)
-            depths.push_back(1);
-    }
-
-    void unify(int n1, int n2)
-    {
-        components--;
-        int r1 = find_root(n1);
-        int r2 = find_root(n2);
-
-        if (depths[r1] == depths[r2])
+        int curr = vec.size() - 1, par;
+        while (curr != 0)
         {
-            depths[r2] += 1;
-            roots[r1] = r2;
+            par = (curr - 1) / 2;
+            if (vec[par] <= vec[curr])
+                return;
+            if (vec[par] > vec[curr])
+            {
+                int tmp = vec[curr];
+                vec[curr] = vec[par];
+                vec[par] = tmp;
+            }
+            curr = par;
         }
-        else if (depths[r1] < depths[r2])
-            roots[r1] = r2;
-        else
-            roots[r2] = r1;
     }
 
-    int find_root(int n)
+    void pop()
     {
-        int curr = n;
-        while (roots[curr] != curr)
-            curr = roots[curr];
-        // route compression
-        roots[n] = curr;
-        return curr;
+        vec[0] = vec[vec.size() - 1];
+        vec.pop_back();
+
+        int curr = 0, next;
+        while (true)
+        {
+            int child1 = curr * 2 + 1;
+            int child2 = curr * 2 + 2;
+
+            if (child1 >= vec.size() && child2 >= vec.size())
+                break;
+            else if (child1 < vec.size() && child2 < vec.size())
+            {
+                if (vec[child1] < vec[child2])
+                    next = child1;
+                else
+                    next = child2;
+            }
+            else if (child1 < vec.size())
+                next = child1;
+            else
+                next = child2;
+
+            if (vec[curr] <= vec[next])
+                break;
+            else
+            {
+                int tmp = vec[next];
+                vec[next] = vec[curr];
+                vec[curr] = tmp;
+            }
+            curr = next;
+        }
     }
 };
-
-void quicksort(vector<Edge> &edges, int left, int right)
-{
-    if (left >= right)
-        return;
-
-    int t = left, p = left + 1, q = right;
-    while (p != q)
-    {
-        while (edges[q].cost >= edges[t].cost && p != q)
-            q--;
-        while (edges[p].cost <= edges[t].cost && p != q)
-            p++;
-
-        Edge tmp = edges[p];
-        edges[p] = edges[q];
-        edges[q] = tmp;
-    }
-
-    if (edges[t].cost >= edges[p].cost)
-    {
-        Edge tmp = edges[t];
-        edges[t] = edges[p];
-        edges[p] = tmp;
-        t = p;
-    }
-
-    quicksort(edges, left, t - 1);
-    quicksort(edges, t + 1, right);
-}
 
 int main()
 {
@@ -94,37 +75,23 @@ int main()
     freopen("data.in", "r", stdin);
 #endif
 
-    int N, M;
-    cin >> N >> M;
-    UnionFind uf(N);
-    vector<Edge> edges(M);
-    while (M--)
-    {
-        int x, y, t;
-        cin >> x >> y >> t;
-        edges[M].out = x;
-        edges[M].in = y;
-        edges[M].cost = t;
-    }
+    Heap heap;
+    int n, op, x;
 
-    quicksort(edges, 0, edges.size() - 1);
+    cin >> n;
 
-    int earliest = -1;
-    for (int i = 0; i < edges.size(); i++)
+    while (n--)
     {
-        int n1 = edges[i].out - 1;
-        int n2 = edges[i].in - 1;
-        if (uf.find_root(n1) != uf.find_root(n2))
-            uf.unify(n1, n2);
-        if (uf.components == 1)
+        cin >> op;
+
+        if (op == 1)
         {
-            earliest = edges[i].cost;
-            break;
+            cin >> x;
+            heap.add(x);
         }
+        else if (op == 2)
+            cout << heap.vec[0] << endl;
+        else
+            heap.pop();
     }
-
-    if (N < 2)
-        cout << 0 << endl;
-    else
-        cout << earliest << endl;
 }
