@@ -4,28 +4,13 @@ using namespace std;
 
 #define LOCAL
 
-class Pair
+class MinHeap
 {
 
 public:
-    int value, index;
+    vector<int> vec;
 
-    Pair() {}
-
-    Pair(int index, int value)
-    {
-        this->index = index;
-        this->value = value;
-    }
-};
-
-class Heap
-{
-
-public:
-    vector<Pair> vec;
-
-    void add(Pair x)
+    void add(int x)
     {
         vec.push_back(x);
 
@@ -33,11 +18,11 @@ public:
         while (curr != 0)
         {
             par = (curr - 1) / 2;
-            if (vec[par].value <= vec[curr].value)
+            if (vec[par] <= vec[curr])
                 return;
-            if (vec[par].value > vec[curr].value)
+            if (vec[par] > vec[curr])
             {
-                Pair tmp = vec[curr];
+                int tmp = vec[curr];
                 vec[curr] = vec[par];
                 vec[par] = tmp;
             }
@@ -45,9 +30,9 @@ public:
         }
     }
 
-    Pair pop()
+    int pop()
     {
-        Pair popping = vec[0];
+        int popping = vec[0];
         vec[0] = vec[vec.size() - 1];
         vec.pop_back();
 
@@ -61,7 +46,7 @@ public:
                 break;
             else if (child1 < vec.size() && child2 < vec.size())
             {
-                if (vec[child1].value < vec[child2].value)
+                if (vec[child1] < vec[child2])
                     next = child1;
                 else
                     next = child2;
@@ -71,11 +56,78 @@ public:
             else
                 next = child2;
 
-            if (vec[curr].value <= vec[next].value)
+            if (vec[curr] <= vec[next])
                 break;
             else
             {
-                Pair tmp = vec[next];
+                int tmp = vec[next];
+                vec[next] = vec[curr];
+                vec[curr] = tmp;
+            }
+            curr = next;
+        }
+
+        return popping;
+    }
+};
+
+class MaxHeap
+{
+
+public:
+    vector<int> vec;
+
+    void add(int x)
+    {
+        vec.push_back(x);
+
+        int curr = vec.size() - 1, par;
+        while (curr != 0)
+        {
+            par = (curr - 1) / 2;
+            if (vec[par] >= vec[curr])
+                return;
+            if (vec[par] < vec[curr])
+            {
+                int tmp = vec[curr];
+                vec[curr] = vec[par];
+                vec[par] = tmp;
+            }
+            curr = par;
+        }
+    }
+
+    int pop()
+    {
+        int popping = vec[0];
+        vec[0] = vec[vec.size() - 1];
+        vec.pop_back();
+
+        int curr = 0, next;
+        while (true)
+        {
+            int child1 = curr * 2 + 1;
+            int child2 = curr * 2 + 2;
+
+            if (child1 >= vec.size() && child2 >= vec.size())
+                break;
+            else if (child1 < vec.size() && child2 < vec.size())
+            {
+                if (vec[child1] > vec[child2])
+                    next = child1;
+                else
+                    next = child2;
+            }
+            else if (child1 < vec.size())
+                next = child1;
+            else
+                next = child2;
+
+            if (vec[curr] >= vec[next])
+                break;
+            else
+            {
+                int tmp = vec[next];
                 vec[next] = vec[curr];
                 vec[curr] = tmp;
             }
@@ -93,43 +145,51 @@ int main()
     freopen("data.in", "r", stdin);
 #endif
 
-    int n, m;
-    cin >> n >> m;
+    int m, n, tmp;
+    vector<int> numbers, thresholds;
 
-    vector<vector<int>> equations;
-    while (n--)
-    {
-        int a, b, c;
-        cin >> a >> b >> c;
-        vector<int> curr{a, b, c, 1};
-        equations.push_back(curr);
-    }
-
-    Heap heap;
-    for (int i = 0; i < equations.size(); i++)
-    {
-
-        int value = equations[i][0] * equations[i][3] * equations[i][3] +
-                    equations[i][1] * equations[i][3] +
-                    equations[i][2];
-        Pair pair(i, value);
-        heap.add(pair);
-    }
-
+    cin >> m >> n;
     while (m--)
     {
+        cin >> tmp;
+        numbers.push_back(tmp);
+    }
+    while (n--)
+    {
+        cin >> tmp;
+        thresholds.push_back(tmp);
+    }
 
-        Pair curr = heap.pop();
+    MaxHeap maxheap;
+    MinHeap minheap;
 
-        if (m == 0)
-            cout << curr.value << endl;
-        else
-            cout << curr.value << " ";
+    int volumn = 1;
+    int i = 0;
+    for (int t : thresholds)
+    {
+        while (i < t)
+        {
 
-        equations[curr.index][3] += 1;
-        curr.value = equations[curr.index][0] * equations[curr.index][3] * equations[curr.index][3] +
-                     equations[curr.index][1] * equations[curr.index][3] +
-                     equations[curr.index][2];
-        heap.add(curr);
+            if (maxheap.vec.size() < volumn)
+                maxheap.add(numbers[i]);
+            else
+            {
+                minheap.add(numbers[i]);
+                while (minheap.vec[0] < maxheap.vec[0])
+                {
+                    int n1 = minheap.pop();
+                    int n2 = maxheap.pop();
+                    minheap.add(n2);
+                    maxheap.add(n1);
+                }
+            }
+            i++;
+        }
+
+        cout << maxheap.vec[0] << endl;
+
+        volumn++;
+        if(minheap.vec.size()!=0)
+            maxheap.add(minheap.pop());
     }
 }
